@@ -19,118 +19,112 @@
 #define TRAY_RETRY_COUNT 10
 #define TRAY_RETRY_WAIT 2000
 
-#include "QSynergyApplication.h"
+#include "AppConfig.h"
 #include "LicenseManager.h"
 #include "MainWindow.h"
-#include "AppConfig.h"
+#include "QSynergyApplication.h"
 #include "SetupWizard.h"
 
+#include <QMessageBox>
+#include <QSettings>
 #include <QtCore>
 #include <QtGui>
-#include <QSettings>
-#include <QMessageBox>
 
 #if defined(Q_OS_MAC)
 #include <Carbon/Carbon.h>
 
 #endif
 
-class QThreadImpl : public QThread
-{
+class QThreadImpl : public QThread {
 public:
-    static void msleep(unsigned long msecs)
-    {
-        QThread::msleep(msecs);
+    static void
+    msleep (unsigned long msecs) {
+        QThread::msleep (msecs);
     }
 };
 
-int waitForTray();
+int waitForTray ();
 
 #if defined(Q_OS_MAC)
-bool checkMacAssistiveDevices();
+bool checkMacAssistiveDevices ();
 #endif
 
-int main(int argc, char* argv[])
-{
-    QCoreApplication::setOrganizationName("Synergy");
-    QCoreApplication::setOrganizationDomain("http://symless.com/");
-    QCoreApplication::setApplicationName("Synergy");
+int
+main (int argc, char* argv[]) {
+    QCoreApplication::setOrganizationName ("Synergy");
+    QCoreApplication::setOrganizationDomain ("http://symless.com/");
+    QCoreApplication::setApplicationName ("Synergy");
 
-    QSynergyApplication app(argc, argv);
+    QSynergyApplication app (argc, argv);
 
 #if defined(Q_OS_MAC)
 
-    if (app.applicationDirPath().startsWith("/Volumes/")) {
-        QMessageBox::information(
-            NULL, "Synergy",
-            "Please drag Synergy to the Applications folder, and open it from there.");
+    if (app.applicationDirPath ().startsWith ("/Volumes/")) {
+        QMessageBox::information (NULL, "Synergy", "Please drag Synergy to the "
+                                                   "Applications folder, and "
+                                                   "open it from there.");
         return 1;
     }
 
-    if (!checkMacAssistiveDevices())
-    {
+    if (!checkMacAssistiveDevices ()) {
         return 1;
     }
 #endif
 
-    if (!waitForTray())
-    {
+    if (!waitForTray ()) {
         return -1;
     }
 
 #ifndef Q_OS_WIN
-    QApplication::setQuitOnLastWindowClosed(false);
+    QApplication::setQuitOnLastWindowClosed (false);
 #endif
 
     QSettings settings;
     AppConfig appConfig (&settings);
-    qRegisterMetaType<Edition>("Edition");
+    qRegisterMetaType<Edition> ("Edition");
     LicenseManager licenseManager (&appConfig);
 
-    app.switchTranslator(appConfig.language());
+    app.switchTranslator (appConfig.language ());
 
-    MainWindow mainWindow(settings, appConfig, licenseManager);
-    SetupWizard setupWizard(mainWindow, true);
+    MainWindow mainWindow (settings, appConfig, licenseManager);
+    SetupWizard setupWizard (mainWindow, true);
 
-    if (appConfig.wizardShouldRun())
-    {
-        setupWizard.show();
-    }
-    else
-    {
-        mainWindow.open();
+    if (appConfig.wizardShouldRun ()) {
+        setupWizard.show ();
+    } else {
+        mainWindow.open ();
     }
 
-    return app.exec();
+    return app.exec ();
 }
 
-int waitForTray()
-{
-    // on linux, the system tray may not be available immediately after logging in,
+int
+waitForTray () {
+    // on linux, the system tray may not be available immediately after logging
+    // in,
     // so keep retrying but give up after a short time.
     int trayAttempts = 0;
-    while (true)
-    {
-        if (QSystemTrayIcon::isSystemTrayAvailable())
-        {
+    while (true) {
+        if (QSystemTrayIcon::isSystemTrayAvailable ()) {
             break;
         }
 
-        if (++trayAttempts > TRAY_RETRY_COUNT)
-        {
-            QMessageBox::critical(NULL, "Synergy",
-                QObject::tr("System tray is unavailable, quitting."));
+        if (++trayAttempts > TRAY_RETRY_COUNT) {
+            QMessageBox::critical (
+                NULL,
+                "Synergy",
+                QObject::tr ("System tray is unavailable, quitting."));
             return false;
         }
 
-        QThreadImpl::msleep(TRAY_RETRY_WAIT);
+        QThreadImpl::msleep (TRAY_RETRY_WAIT);
     }
     return true;
 }
 
 #if defined(Q_OS_MAC)
-bool checkMacAssistiveDevices()
-{
+bool
+checkMacAssistiveDevices () {
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1090 // mavericks
 
     // new in mavericks, applications are trusted individually
@@ -139,25 +133,27 @@ bool checkMacAssistiveDevices()
     // tab, with a list of allowed applications. synergy should
     // show up there automatically, but will be unchecked.
 
-    if (AXIsProcessTrusted()) {
+    if (AXIsProcessTrusted ()) {
         return true;
     }
 
-    const void* keys[] = { kAXTrustedCheckOptionPrompt };
-    const void* trueValue[] = { kCFBooleanTrue };
-    CFDictionaryRef options = CFDictionaryCreate(NULL, keys, trueValue, 1, NULL, NULL);
+    const void* keys[]      = {kAXTrustedCheckOptionPrompt};
+    const void* trueValue[] = {kCFBooleanTrue};
+    CFDictionaryRef options =
+        CFDictionaryCreate (NULL, keys, trueValue, 1, NULL, NULL);
 
-    bool result = AXIsProcessTrustedWithOptions(options);
-    CFRelease(options);
+    bool result = AXIsProcessTrustedWithOptions (options);
+    CFRelease (options);
     return result;
 
 #else
 
     // now deprecated in mavericks.
-    bool result = AXAPIEnabled();
+    bool result = AXAPIEnabled ();
     if (!result) {
-        QMessageBox::information(
-            NULL, "Synergy",
+        QMessageBox::information (
+            NULL,
+            "Synergy",
             "Please enable access to assistive devices "
             "System Preferences -> Security & Privacy -> "
             "Privacy -> Accessibility, then re-open Synergy.");
