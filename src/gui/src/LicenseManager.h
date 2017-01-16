@@ -38,7 +38,7 @@ public:
 	SerialKey serialKey() const;
 	void skipActivation();
 	void notifyUpdate(QString fromVersion, QString toVersion);
-	static QString getEditionName(Edition edition, bool trial = false);
+	static QString getEditionName(Edition edition);
 	void notifyActivation(QString identity);
 
 private:

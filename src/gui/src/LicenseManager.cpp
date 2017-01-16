@@ -96,13 +96,13 @@ LicenseManager::notifyUpdate(QString fromVersion, QString toVersion) {
 Edition
 LicenseManager::activeEdition() const
 {
-	return m_serialKey.edition();
+	return kPro;
 }
 
 QString
 LicenseManager::activeEditionName() const
 {
-	return getEditionName(activeEdition(), m_serialKey.isTrial());
+	return getEditionName(activeEdition());
 }
 
 SerialKey
@@ -133,7 +133,7 @@ void LicenseManager::skipActivation()
 }
 
 QString
-LicenseManager::getEditionName(Edition const edition, bool trial)
+LicenseManager::getEditionName(Edition const edition)
 {
 	std::string name ("Synergy");
 	switch (edition) {
@@ -145,9 +145,6 @@ LicenseManager::getEditionName(Edition const edition, bool trial)
 			break;
 		default:
 			name += " Pro";
-	}
-	if (trial) {
-		name += " (Trial)";
 	}
 	return QString::fromUtf8 (name.c_str(), name.size());
 }
