@@ -1456,26 +1456,6 @@ void MainWindow::bonjourInstallFinished()
 
 int MainWindow::raiseActivationDialog()
 {
-	if (m_ActivationDialogRunning) {
-		return QDialog::Rejected;
-	}
-	ActivationDialog activationDialog (this, appConfig(), licenseManager());
-	m_ActivationDialogRunning = true;
-	connect (&activationDialog, SIGNAL(finished(int)),
-			 this, SLOT(on_activationDialogFinish()), Qt::QueuedConnection);
-	int result = activationDialog.exec();
-	m_ActivationDialogRunning = false;
-	if (!m_PendingClientNames.empty()) {
-		foreach (const QString& name, m_PendingClientNames) {
-			autoAddScreen(name);
-		}
-
-		m_PendingClientNames.clear();
-	}
-	if (result == QDialog::Accepted) {
-		restartSynergy();
-	}
-	return result;
 }
 
 void MainWindow::on_windowShown()
